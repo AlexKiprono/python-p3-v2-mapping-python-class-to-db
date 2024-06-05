@@ -1,7 +1,4 @@
-#!/usr/bin/env python3
-
 from __init__ import CURSOR, CONN
-
 
 class Department:
 
@@ -15,23 +12,38 @@ class Department:
 
     @classmethod
     def create_table(cls):
-        """Create a table to persist the attributes off Department instances."""
+        """ Create a new table to persist the attributes of Department instances """
         sql = """
-                CREATE TABLE IF NOT EXISTS departments(
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT NOT NULL,
-                    location TEXT NOT NULL)
-                """
+            CREATE TABLE IF NOT EXISTS departments (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            location TEXT)
+        """
         CURSOR.execute(sql)
         CONN.commit()
 
     @classmethod
     def drop_table(cls):
-        """Drop the table that persists the Department instances"""
-        sql = """DROP TABLE IF EXISTS departments"""
-
+        """ Drop the table that persists Department instances """
+        sql = """
+            DROP TABLE IF EXISTS departments;
+        """
         CURSOR.execute(sql)
         CONN.commit()
+
+    def save(self):
+        """ Insert a new row with the name and location values of the current Department instance.
+        Update object id attribute using the primary key value of new row.
+        """
+        sql = """
+            INSERT INTO departments (name, location)
+            VALUES (?, ?)
+        """
+
+        CURSOR.execute(sql, (self.name, self.location))
+        CONN.commit()
+
+        self.id = CURSOR.lastrowid
 
     @classmethod
     def create(cls, name, location):
@@ -59,46 +71,3 @@ class Department:
 
         CURSOR.execute(sql, (self.id,))
         CONN.commit()
-
-    def save(self):
-        """Insert a new row with the name and location values of the current Department instance
-            Update object id attribute using the primary key of the new row"""
-        sql = """
-        INSERT INTO departments (name, location)
-        VALUES (?,?)
-        """
-        CURSOR.execute(sql, (self.name, self.location))
-        CONN.commit()
-
-        self.id = CURSOR.lastrowid
-
-Department.drop_table()
-Department.create_table()
-
-payroll = Department("Payroll", "Building A, 5th Floor")
-print(payroll)  # <Department None: Payroll, Building A, 5th Floor>
-
-hr = Department.create("Human Resources", "Building C, East Wing")
-hr = Department.create("Human Resources", "Building C, East Wing")
-hr = Department.create("Software Resources", "Building C, East Wing")
-
-print(hr)  # <Department 2: Human Resources, Building C, East Wing>
-
-payroll.save()  # Persist to db, assign object id attribute
-print(payroll)  # <Department 1: Payroll, Building A, 5th Floor>
-
-hr = Department("Human Resources", "Building C, East Wing")
-print(hr)  # <Department None: Human Resources, Building C, East Wing>
-
-hr.save()  # Persist to db, assign object id attribute
-print(hr)  # <Department 2: Human Resources, Building C, East Wing>
-
-
-hr.name = 'HR'
-hr.location = "Building F, 10th Floor"
-hr.update()
-print(hr)  # <Department 2: HR, Building F, 10th Floor>
-
-print("Delete Payroll")
-payroll.delete()  # delete from db table, object still exists in memory
-print(payroll)  # <Department 1: Payroll, Building A, 5th Floor>
